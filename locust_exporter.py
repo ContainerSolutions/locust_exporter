@@ -18,7 +18,7 @@ class LocustCollector(object):
     try:
         response = requests.get(url).content.decode('Utf-8')
     except requests.exceptions.ConnectionError:
-        print "Failed to connect to Locust:", url
+        print("Failed to connect to Locust:", url)
         exit(2)
 
     response = json.loads(response)
@@ -60,13 +60,13 @@ class LocustCollector(object):
 if __name__ == '__main__':
   # Usage: locust_exporter.py <port> <locust_host:port>
   if len(sys.argv) != 3:
-      print 'Usage: locust_exporter.py <port> <locust_host:port>'
+      print('Usage: locust_exporter.py <port> <locust_host:port>')
       exit(1)
   else:
     try:
         start_http_server(int(sys.argv[1]))
         REGISTRY.register(LocustCollector(str(sys.argv[2])))
-        print "Connecting to locust on: " + sys.argv[2]
+        print("Connecting to locust on: " + sys.argv[2])
         while True: time.sleep(1)
     except KeyboardInterrupt:
         exit(0)
