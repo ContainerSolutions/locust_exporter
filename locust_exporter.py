@@ -23,7 +23,7 @@ class LocustCollector(object):
 
     response = json.loads(response)
 
-    stats_metrics=['avg_content_length','avg_response_time','current_rps','max_response_time','median_response_time','min_response_time','num_failures','num_requests']
+    stats_metrics=['avg_content_length','avg_response_time','current_rps','max_response_time','median_response_time','min_response_time','num_failures','num_requests','max_connect','max_dns_lookup','max_name_lookup','max_pre_transfer','max_server_processing','max_start_transfer','max_tcp_connection','max_tls_handshake','min_connect','min_dns_lookup','min_name_lookup','min_pre_transfer','min_server_processing','min_start_transfer','min_tcp_connection','min_tls_handshake']
 
     metric = Metric('locust_user_count', 'Swarmed users', 'gauge')
     metric.add_sample('locust_user_count', value=response['user_count'], labels={})
