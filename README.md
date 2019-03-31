@@ -9,10 +9,10 @@ Requirements: prometheus_client (sudo pip install prometheus_client)
 
 Running the exporter:
 
-`./locust_exporter.py <listen_port> <locust_host:port>`
+`<LISTENER_PORT=1234> <LOCUST=localhost:8089> python ./locust_exporter.py`
 
 i.e.:
 
-`./locust_exporter.py 1234 localhost:8089`
+`LISTENER_PORT=1234 LOCUST=localhost:8089 python ./locust_exporter.py`
 
 ![](https://github.com/mbolek/locust_exporter/blob/master/locust_exporter.png)

@@ -19,12 +19,13 @@ class LocustCollector(object):
     try:
         response = requests.get(url).content.decode('Utf-8')
     except requests.exceptions.ConnectionError:
-        print "Failed to connect to Locust:", url
-        exit(2)
+        print("Failed to connect to Locust:", url)
+        return None
 
     response = json.loads(response)
 
-    stats_metrics=['avg_content_length','avg_response_time','current_rps','max_response_time','median_response_time','min_response_time','num_failures','num_requests','max_connect','max_dns_lookup','max_name_lookup','max_pre_transfer','max_server_processing','max_start_transfer','max_tcp_connection','max_tls_handshake','min_connect','min_dns_lookup','min_name_lookup','min_pre_transfer','min_server_processing','min_start_transfer','min_tcp_connection','min_tls_handshake']
+    stats_metrics=['avg_content_length','avg_response_time','current_rps','max_response_time','median_response_time','min_response_time','num_failures','num_requests',
+                   'max_connect','max_dns_lookup','max_name_lookup','max_pre_transfer','max_server_processing','max_start_transfer','max_tcp_connection','max_tls_handshake','min_connect','min_dns_lookup','min_name_lookup','min_pre_transfer','min_server_processing','min_start_transfer','min_tcp_connection','min_tls_handshake']
 
     metric = Metric('locust_user_count', 'Swarmed users', 'gauge')
     metric.add_sample('locust_user_count', value=response['user_count'], labels={})
@@ -63,7 +64,10 @@ class LocustCollector(object):
         metric = Metric('locust_requests_'+mtr, 'Locust requests '+mtr, mtype)
         for stat in response['stats']:
             if not 'Total' in stat['name']:
-                metric.add_sample('locust_requests_'+mtr, value=stat[mtr], labels={'path':stat['name'], 'method':stat['method']})
+                if mtr in stat:
+                    metric.add_sample('locust_requests_'+mtr, value=stat[mtr], labels={'path':stat['name'], 'method':stat['method']})
+                else:
+                    print(mtr)
         yield metric
 
 if __name__ == '__main__':
@@ -71,7 +75,7 @@ if __name__ == '__main__':
     try:
         start_http_server(int(os.environ.get('LISTENER_PORT', 8080)))
         REGISTRY.register(LocustCollector(os.environ['LOCUST']))
-        print "Connecting to locust on: " + os.environ['LOCUST']
+        print("Connecting to locust on: " + os.environ['LOCUST'])
         while True: time.sleep(1000)
     except KeyboardInterrupt:
         exit(0)
