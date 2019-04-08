@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 3,
+  "id": null,
   "links": [],
   "panels": [
     {
@@ -471,7 +471,12 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [],
+      "seriesOverrides": [
+        {
+          "alias": "AVG MAX",
+          "yaxis": 2
+        }
+      ],
       "stack": false,
       "steppedLine": false,
       "targets": [
@@ -582,21 +587,36 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [],
+      "seriesOverrides": [
+        {
+          "alias": "fail_ratio [%]",
+          "yaxis": 2
+        }
+      ],
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "expr": "rate(locust_requests_num_requests[1m])",
+          "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ method}} - {{path}}",
           "refId": "A",
           "step": 2
         },
         {
-          "expr": "sum(locust_errors)",
+          "expr": "sum(rate(locust_requests_num_requests[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "total",
+          "refId": "C"
+        },
+        {
+          "expr": "locust_fail_ratio * 100",
+          "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "ERRORS",
+          "legendFormat": "fail_ratio [%]",
           "refId": "B",
           "step": 2
         }
@@ -634,7 +654,7 @@
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         }
       ],
@@ -853,5 +873,5 @@
   "timezone": "browser",
   "title": "Locust",
   "uid": "0WllLp6mz",
-  "version": 18
+  "version": 2
 }
