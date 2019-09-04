@@ -1,0 +1,33 @@
+sudo: required
+language: bash
+services:
+  - docker
+env:
+  global:
+    - IMAGE_NAME=containersol/locust_exporter
+
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+before_script:
+  - docker pull "${IMAGE_NAME}:latest" || true
+
+script:
+  - docker build --cache-from "${IMAGE_NAME}" --tag "${IMAGE_NAME}:${TRAVIS_COMMIT}" .
+
+before_deploy:
+  - echo "$REGISTRY_PASS" | docker login --username "$REGISTRY_USER" --password-stdin || true
+
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: docker tag "${IMAGE_NAME}:${TRAVIS_COMMIT}" "${IMAGE_NAME}:latest" && docker push "${IMAGE_NAME}:latest";
+    on:
+      branch: master
+  - provider: script
+    skip_cleanup: true
+    script: docker tag "${IMAGE_NAME}:${TRAVIS_COMMIT}" "${IMAGE_NAME}:${TRAVIS_TAG}" && docker push "${IMAGE_NAME}:${TRAVIS_TAG}";
+    on:
+      tags: true
