@@ -71,7 +71,7 @@ if __name__ == '__main__':
   # Usage: locust_exporter.py <port> <locust_host:port>
     try:
         port = int(os.environ.get('LISTENER_PORT', 9646))
-        locust = os.environ.get('LOCUST', 'localhost')
+        locust = os.environ.get('LOCUST', 'localhost:8089')
         start_http_server(port)
         REGISTRY.register(LocustCollector(locust))
         print("Connecting to locust on: " + locust)
