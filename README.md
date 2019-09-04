@@ -1,18 +1,35 @@
-# locust_exporter
-A locust exporter for prometheus
+# Locust Exporter
+
+The Locust Exporter for Prometheus based on [mbolek/locust_exporter](https://github.com/mbolek/locust_exporter).
+
+[![Build Status](https://travis-ci.org/ContainerSolutions/locust_exporter.svg?branch=master)](https://travis-ci.org/ContainerSolutions/locust_exporter)
 
 This is a simple exporter for http://locust.io metrics. You get all the necessary details about current tests and the state of the locust.
 
-Errors and requests stats are added with the method and path labels - BE CAREFUL - if you have a lot of endpoints. It is probably better to group the endpoints in your locustfile (please see: http://docs.locust.io/en/latest/writing-a-locustfile.html#grouping-requests-to-urls-with-dynamic-parameters).
+## Quick Start
 
-Requirements: prometheus_client (sudo pip install prometheus_client)
+This package is available as a container:
 
-Running the exporter:
+``` bash
+docker run --net=host -e LOCUST="localhost:8089" containersol/locust_exporter
+```
 
-`<LISTENER_PORT=1234> <LOCUST=localhost:8089> python ./locust_exporter.py`
+### Environment Variables
 
-i.e.:
+The following environment variables configure the exporter:
 
-`LISTENER_PORT=1234 LOCUST=localhost:8089 python ./locust_exporter.py`
+* `LOCUST`
+  Address of Locust. Default is `localhost:8089`.
 
-![](https://github.com/mbolek/locust_exporter/blob/master/locust_exporter.png)
+* `LISTENER_PORT`
+  Port of metrics. Default is `9646`.
+
+## Info
+
+Errors and requests stats are added with the method and path labels - **BE CAREFUL** - if you have a lot of endpoints. It is probably better to group the endpoints in your locustfile: [see here](http://docs.locust.io/en/latest/writing-a-locustfile.html#grouping-requests-to-urls-with-dynamic-parameters).
+
+## Requirements
+
+Requirements:
+
+* prometheus_client  

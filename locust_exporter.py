@@ -31,9 +31,6 @@ class LocustCollector(object):
     metric.add_sample('locust_user_count', value=response['user_count'], labels={})
     yield metric
 
-    metric = Metric('locust_response_time_95', 'Response Time 95th Percentile', 'gauge')
-    metric.add_sample('locust_response_time_95', value=response["current_response_time_percentile_95"], labels={})
-    yield metric
     if 'current_response_time_percentile_99' in response:
         metric = Metric('locust_response_time_99', 'Response Time 99th Percentile', 'gauge')
         metric.add_sample('locust_response_time_99', value=response["current_response_time_percentile_99"], labels={})
@@ -73,9 +70,11 @@ class LocustCollector(object):
 if __name__ == '__main__':
   # Usage: locust_exporter.py <port> <locust_host:port>
     try:
-        start_http_server(int(os.environ.get('LISTENER_PORT', 8080)))
-        REGISTRY.register(LocustCollector(os.environ['LOCUST']))
-        print("Connecting to locust on: " + os.environ['LOCUST'])
+        port = int(os.environ.get('LISTENER_PORT', 9646))
+        locust = os.environ.get('LOCUST', 'localhost')
+        start_http_server(port)
+        REGISTRY.register(LocustCollector(locust))
+        print("Connecting to locust on: " + locust)
         while True: time.sleep(1000)
     except KeyboardInterrupt:
         exit(0)
