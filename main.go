@@ -262,7 +262,7 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 	_ = json.Unmarshal([]byte(bodyAll), &locustStats)
 
 	ch <- prometheus.MustNewConstMetric(e.locustUsers.Desc(), prometheus.GaugeValue, float64(locustStats.UserCount))
-	ch <- prometheus.MustNewConstMetric(e.locustSlaves.Desc(), prometheus.GaugeValue, float64(len(locustStats.Slaves)))
+	ch <- prometheus.MustNewConstMetric(e.locustSlaves.Desc(), prometheus.GaugeValue, float64(getReadySlave(locustStats)))
 
 	for _, r := range locustStats.Stats {
 		if r.Name != "Total" && r.Name != "//stats/requests" {
@@ -296,6 +296,17 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 	ch <- prometheus.MustNewConstMetric(e.locustRunning.Desc(), prometheus.GaugeValue, float64(running))
 
 	return 1
+}
+
+func getReadySlave(locustStats locustStats) int {
+	var runningSlaves = 0;
+	for _, slave := range locustStats.Slaves {
+		if(slave.State == "ready") {
+			runningSlaves++;
+		}
+	}
+
+	return runningSlaves;
 }
 
 func fetchHTTP(uri string, timeout time.Duration) func(endpoint string) (io.ReadCloser, error) {
