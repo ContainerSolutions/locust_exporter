@@ -29,7 +29,7 @@ type Exporter struct {
 	fetch func(endpoint string) (io.ReadCloser, error)
 
 	locustUp, locustUsers, locustSlaves                                                                                                                                                         prometheus.Gauge
-	locustNumRequests, locustNumFailures, locustAvgResponseTime, locustMinResponseTime, locustMaxResponseTime, locustCurrentRps, locustMedianResponseTime, locustAvgContentLength, locustErrors *prometheus.GaugeVec
+	locustSlavesDetail, locustNumRequests, locustNumFailures, locustAvgResponseTime, locustMinResponseTime, locustMaxResponseTime, locustCurrentRps, locustMedianResponseTime, locustAvgContentLength, locustErrors *prometheus.GaugeVec
 	totalScrapes                                                                                                                                                                                prometheus.Counter
 }
 
@@ -71,6 +71,15 @@ func NewExporter(uri string, timeout time.Duration) (*Exporter, error) {
 				Name:      "slaves",
 				Help:      "The current number of slaves.",
 			},
+		),
+		locustSlavesDetail: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Subsystem: "slave",
+				Name:      "detail",
+				Help:      "The current status of a slave with user count",
+			},
+			[]string{"id", "state"},
 		),
 		locustNumRequests: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -142,7 +151,7 @@ func NewExporter(uri string, timeout time.Duration) (*Exporter, error) {
 				Name:      "errors",
 				Help:      "The current number of errors.",
 			},
-			[]string{"method", "name"},
+			[]string{"method", "name", "error"},
 		),
 		totalScrapes: prometheus.NewCounter(
 			prometheus.CounterOpts{
@@ -173,6 +182,7 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	e.locustCurrentRps.Describe(ch)
 	e.locustAvgContentLength.Describe(ch)
 	e.locustErrors.Describe(ch)
+	e.locustSlavesDetail.Describe(ch)
 }
 
 // Collect function of Exporter
@@ -191,6 +201,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.locustMedianResponseTime.Collect(ch)
 	e.locustAvgContentLength.Collect(ch)
 	e.locustErrors.Collect(ch)
+	e.locustSlavesDetail.Collect(ch)
 }
 
 type locustStats struct {
@@ -210,13 +221,17 @@ type locustStats struct {
 		Method     string `json:"method"`
 		Name       string `json:"name"`
 		Error      string `json:"error"`
-		Occurences int    `json:"occurences"`
+		Occurrences int    `json:"occurrences"`
 	} `json:"errors"`
 	TotalRps   float64 `json:"total_rps"`
 	FailRatio  float64 `json:"fail_ratio"`
-	SlaveCount int     `json:"slave_count,omitempty"`
 	State      string  `json:"state"`
 	UserCount  int     `json:"user_count"`
+	Slaves []struct {
+		Id			string `json:"id"`
+		State		string `json:"state"`
+		UserCount	int `json:"user_count"`
+	} `json:"slaves"`
 }
 
 func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
@@ -239,7 +254,7 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 	_ = json.Unmarshal([]byte(bodyAll), &locustStats)
 
 	ch <- prometheus.MustNewConstMetric(e.locustUsers.Desc(), prometheus.GaugeValue, float64(locustStats.UserCount))
-	ch <- prometheus.MustNewConstMetric(e.locustSlaves.Desc(), prometheus.GaugeValue, float64(locustStats.SlaveCount))
+	ch <- prometheus.MustNewConstMetric(e.locustSlaves.Desc(), prometheus.GaugeValue, float64(len(locustStats.Slaves)))
 
 	for _, r := range locustStats.Stats {
 		if r.Name != "Total" && r.Name != "//stats/requests" {
@@ -255,7 +270,11 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 	}
 
 	for _, r := range locustStats.Errors {
-		e.locustErrors.WithLabelValues(r.Method, r.Name).Set(float64(r.Occurences))
+		e.locustErrors.WithLabelValues(r.Method, r.Name, r.Error).Set(float64(r.Occurrences))
+	}
+
+	for _, slave := range locustStats.Slaves {
+		e.locustSlavesDetail.WithLabelValues(slave.Id, slave.State).Set(float64(slave.UserCount))
 	}
 
 	return 1
