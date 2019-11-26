@@ -28,7 +28,7 @@ type Exporter struct {
 	mutex sync.RWMutex
 	fetch func(endpoint string) (io.ReadCloser, error)
 
-	locustUp, locustUsers, locustSlaves                                                                                                                                                         prometheus.Gauge
+	locustRunning, locustUp, locustUsers, locustSlaves                                                                                                                                                         prometheus.Gauge
 	locustSlavesDetail, locustNumRequests, locustNumFailures, locustAvgResponseTime, locustMinResponseTime, locustMaxResponseTime, locustCurrentRps, locustMedianResponseTime, locustAvgContentLength, locustErrors *prometheus.GaugeVec
 	totalScrapes                                                                                                                                                                                prometheus.Counter
 }
@@ -51,6 +51,13 @@ func NewExporter(uri string, timeout time.Duration) (*Exporter, error) {
 	return &Exporter{
 		uri:   uri,
 		fetch: fetch,
+		locustRunning: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "running",
+				Help:      "The current state of the execution (0 = STOPPED 1 = HATCHING 2 = RUNNING,).",
+			},
+		),
 		locustUp: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
@@ -171,6 +178,7 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.locustUsers.Desc()
 	ch <- e.locustSlaves.Desc()
 	ch <- e.locustUp.Desc()
+	ch <- e.locustRunning.Desc()
 	ch <- e.totalScrapes.Desc()
 
 	e.locustNumRequests.Describe(ch)
@@ -276,6 +284,16 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 	for _, slave := range locustStats.Slaves {
 		e.locustSlavesDetail.WithLabelValues(slave.Id, slave.State).Set(float64(slave.UserCount))
 	}
+
+	var running = 0; //stopped
+
+	if(locustStats.State == "hatching") {
+		running = 1;
+	} else if(locustStats.State == "running") {
+		running = 2;
+	}
+
+	ch <- prometheus.MustNewConstMetric(e.locustRunning.Desc(), prometheus.GaugeValue, float64(running))
 
 	return 1
 }
