@@ -28,9 +28,24 @@ type Exporter struct {
 	mutex sync.RWMutex
 	fetch func(endpoint string) (io.ReadCloser, error)
 
-	locustRunning, locustUp, locustUsers, locustSlaves                                                                                                                                                         prometheus.Gauge
-	locustSlavesDetail, locustNumRequests, locustNumFailures, locustAvgResponseTime, locustMinResponseTime, locustMaxResponseTime, locustCurrentRps, locustMedianResponseTime, locustAvgContentLength, locustErrors *prometheus.GaugeVec
-	totalScrapes                                                                                                                                                                                prometheus.Counter
+	locustRunning,
+	locustUp,
+	locustUsers,
+	locustSlavesCount,
+	locustSlavesRunningCount,
+	locustSlavesHatchingCount,
+	locustSlavesMissingCount 			prometheus.Gauge
+	locustSlavesDetail,
+	locustNumRequests,
+	locustNumFailures,
+	locustAvgResponseTime,
+	locustMinResponseTime,
+	locustMaxResponseTime,
+	locustCurrentRps,
+	locustMedianResponseTime,
+	locustAvgContentLength,
+	locustErrors 						*prometheus.GaugeVec
+	totalScrapes 						prometheus.Counter
 }
 
 // NewExporter function
@@ -72,11 +87,32 @@ func NewExporter(uri string, timeout time.Duration) (*Exporter, error) {
 				Help:      "The current number of users.",
 			},
 		),
-		locustSlaves: prometheus.NewGauge(
+		locustSlavesCount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
-				Name:      "slaves",
+				Name:      "slaves_count",
 				Help:      "The current number of slaves.",
+			},
+		),
+		locustSlavesRunningCount: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "slaves_running_count",
+				Help:      "The current number of running slaves.",
+			},
+		),
+		locustSlavesHatchingCount: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "slaves_hatching_count",
+				Help:      "The current number of hatching slaves.",
+			},
+		),
+		locustSlavesMissingCount: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "slaves_missing_count",
+				Help:      "The current number of missing slaves.",
 			},
 		),
 		locustSlavesDetail: prometheus.NewGaugeVec(
@@ -176,7 +212,10 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	defer e.mutex.Unlock()
 
 	ch <- e.locustUsers.Desc()
-	ch <- e.locustSlaves.Desc()
+	ch <- e.locustSlavesCount.Desc()
+	ch <- e.locustSlavesRunningCount.Desc()
+	ch <- e.locustSlavesHatchingCount.Desc()
+	ch <- e.locustSlavesMissingCount.Desc()
 	ch <- e.locustUp.Desc()
 	ch <- e.locustRunning.Desc()
 	ch <- e.totalScrapes.Desc()
@@ -262,7 +301,10 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 	_ = json.Unmarshal([]byte(bodyAll), &locustStats)
 
 	ch <- prometheus.MustNewConstMetric(e.locustUsers.Desc(), prometheus.GaugeValue, float64(locustStats.UserCount))
-	ch <- prometheus.MustNewConstMetric(e.locustSlaves.Desc(), prometheus.GaugeValue, float64(len(locustStats.Slaves)))
+	ch <- prometheus.MustNewConstMetric(e.locustSlavesCount.Desc(), prometheus.GaugeValue, float64(len(locustStats.Slaves)))
+	ch <- prometheus.MustNewConstMetric(e.locustSlavesRunningCount.Desc(), prometheus.GaugeValue, countSlavesByState(locustStats, "running"))
+	ch <- prometheus.MustNewConstMetric(e.locustSlavesHatchingCount.Desc(), prometheus.GaugeValue, countSlavesByState(locustStats, "hatching"))
+	ch <- prometheus.MustNewConstMetric(e.locustSlavesMissingCount.Desc(), prometheus.GaugeValue, countSlavesByState(locustStats, "missing"))
 
 	for _, r := range locustStats.Stats {
 		if r.Name != "Total" && r.Name != "//stats/requests" {
@@ -316,6 +358,17 @@ func fetchHTTP(uri string, timeout time.Duration) func(endpoint string) (io.Read
 		}
 		return resp.Body, nil
 	}
+}
+
+func countSlavesByState(stats locustStats, state string) float64 {
+	var count = 0;
+	for _, slave := range stats.Slaves {
+		if(slave.State == state) {
+			count++;
+		}
+	}
+
+	return float64(count);
 }
 
 func main() {
