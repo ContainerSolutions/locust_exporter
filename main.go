@@ -28,8 +28,8 @@ type Exporter struct {
 	mutex sync.RWMutex
 	fetch func(endpoint string) (io.ReadCloser, error)
 
-	locustUp, locustUsers, locustSlaves                                                                                                                                                         prometheus.Gauge
-	locustNumRequests, locustNumFailures, locustAvgResponseTime, locustMinResponseTime, locustMaxResponseTime, locustCurrentRps, locustMedianResponseTime, locustAvgContentLength, locustErrors *prometheus.GaugeVec
+	locustUp, locustUsers, locustSlaves, locustFailRatio, locustCurrentResponseTimePercentileNinetyFifth, locustCurrentResponseTimePercentileFiftieth                                                                                                                                                        prometheus.Gauge
+	locustNumRequests, locustNumFailures, locustAvgResponseTime, locustNinetiethResponseTime, locustCurrentFailPerSec, locustMinResponseTime, locustMaxResponseTime, locustCurrentRps, locustMedianResponseTime, locustAvgContentLength, locustErrors *prometheus.GaugeVec
 	totalScrapes                                                                                                                                                                                prometheus.Counter
 }
 
@@ -72,6 +72,27 @@ func NewExporter(uri string, timeout time.Duration) (*Exporter, error) {
 				Help:      "The current number of slaves.",
 			},
 		),
+		locustCurrentResponseTimePercentileNinetyFifth: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Subsystem: "requests",
+				Name:      "current_response_time_percentile_95",
+			},
+		),
+		locustCurrentResponseTimePercentileFiftieth: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Subsystem: "requests",
+				Name:      "current_response_time_percentile_50",
+			},
+		),
+		locustFailRatio: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Subsystem: "requests",
+				Name:      "fail_ratio",
+			},
+		),
 		locustNumRequests: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
@@ -93,6 +114,22 @@ func NewExporter(uri string, timeout time.Duration) (*Exporter, error) {
 				Namespace: namespace,
 				Subsystem: "requests",
 				Name:      "avg_response_time",
+			},
+			[]string{"method", "name"},
+		),
+		locustNinetiethResponseTime: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Subsystem: "requests",
+				Name:      "ninetieth_response_time",
+			},
+			[]string{"method", "name"},
+		),
+		locustCurrentFailPerSec: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Subsystem: "requests",
+				Name:      "current_fail_per_sec",
 			},
 			[]string{"method", "name"},
 		),
@@ -163,10 +200,15 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.locustSlaves.Desc()
 	ch <- e.locustUp.Desc()
 	ch <- e.totalScrapes.Desc()
+	ch <- e.locustFailRatio.Desc()
+	ch <- e.locustCurrentResponseTimePercentileNinetyFifth.Desc()
+	ch <- e.locustCurrentResponseTimePercentileFiftieth.Desc()
 
 	e.locustNumRequests.Describe(ch)
 	e.locustNumFailures.Describe(ch)
 	e.locustAvgResponseTime.Describe(ch)
+	e.locustNinetiethResponseTime.Describe(ch)
+	e.locustCurrentFailPerSec.Describe(ch)
 	e.locustMinResponseTime.Describe(ch)
 	e.locustMaxResponseTime.Describe(ch)
 	e.locustMedianResponseTime.Describe(ch)
@@ -185,6 +227,8 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.locustNumRequests.Collect(ch)
 	e.locustNumFailures.Collect(ch)
 	e.locustAvgResponseTime.Collect(ch)
+    e.locustNinetiethResponseTime.Collect(ch)
+    e.locustCurrentFailPerSec.Collect(ch)
 	e.locustMinResponseTime.Collect(ch)
 	e.locustMaxResponseTime.Collect(ch)
 	e.locustCurrentRps.Collect(ch)
@@ -195,16 +239,18 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 type locustStats struct {
 	Stats []struct {
-		Method             string  `json:"method"`
-		Name               string  `json:"name"`
-		NumRequests        int     `json:"num_requests"`
-		NumFailures        int     `json:"num_failures"`
-		AvgResponseTime    float64 `json:"avg_response_time"`
-		MinResponseTime    float64 `json:"min_response_time"`
-		MaxResponseTime    float64 `json:"max_response_time"`
-		CurrentRps         float64 `json:"current_rps"`
-		MedianResponseTime float64 `json:"median_response_time"`
-		AvgContentLength   float64 `json:"avg_content_length"`
+		Method                  string  `json:"method"`
+		Name                    string  `json:"name"`
+		NumRequests             int     `json:"num_requests"`
+		NumFailures             int     `json:"num_failures"`
+		AvgResponseTime         float64 `json:"avg_response_time"`
+		NinetiethResponseTime   float64 `json:"ninetieth_response_time"`
+		CurrentFailPerSec       float64 `json:"current_fail_per_sec"`
+		MinResponseTime         float64 `json:"min_response_time"`
+		MaxResponseTime         float64 `json:"max_response_time"`
+		CurrentRps              float64 `json:"current_rps"`
+		MedianResponseTime      float64 `json:"median_response_time"`
+		AvgContentLength        float64 `json:"avg_content_length"`
 	} `json:"stats"`
 	Errors []struct {
 		Method     string `json:"method"`
@@ -212,11 +258,13 @@ type locustStats struct {
 		Error      string `json:"error"`
 		Occurences int    `json:"occurences"`
 	} `json:"errors"`
-	TotalRps   float64 `json:"total_rps"`
-	FailRatio  float64 `json:"fail_ratio"`
-	SlaveCount int     `json:"slave_count,omitempty"`
-	State      string  `json:"state"`
-	UserCount  int     `json:"user_count"`
+	TotalRps                                    float64 `json:"total_rps"`
+	FailRatio                                   float64 `json:"fail_ratio"`
+	CurrentResponseTimePercentileNinetyFifth    float64 `json:"current_response_time_percentile_95"`
+	CurrentResponseTimePercentileFiftieth       float64 `json:"current_response_time_percentile_50"`
+	SlaveCount                                  int     `json:"slave_count,omitempty"`
+	State                                       string  `json:"state"`
+	UserCount                                   int     `json:"user_count"`
 }
 
 func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
@@ -240,12 +288,17 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 
 	ch <- prometheus.MustNewConstMetric(e.locustUsers.Desc(), prometheus.GaugeValue, float64(locustStats.UserCount))
 	ch <- prometheus.MustNewConstMetric(e.locustSlaves.Desc(), prometheus.GaugeValue, float64(locustStats.SlaveCount))
+	ch <- prometheus.MustNewConstMetric(e.locustFailRatio.Desc(), prometheus.GaugeValue, float64(locustStats.FailRatio))
+	ch <- prometheus.MustNewConstMetric(e.locustCurrentResponseTimePercentileNinetyFifth.Desc(), prometheus.GaugeValue, float64(locustStats.CurrentResponseTimePercentileNinetyFifth))
+	ch <- prometheus.MustNewConstMetric(e.locustCurrentResponseTimePercentileFiftieth.Desc(), prometheus.GaugeValue, float64(locustStats.CurrentResponseTimePercentileFiftieth))
 
 	for _, r := range locustStats.Stats {
 		if r.Name != "Total" && r.Name != "//stats/requests" {
 			e.locustNumRequests.WithLabelValues(r.Method, r.Name).Set(float64(r.NumRequests))
 			e.locustNumFailures.WithLabelValues(r.Method, r.Name).Set(float64(r.NumFailures))
 			e.locustAvgResponseTime.WithLabelValues(r.Method, r.Name).Set(r.AvgResponseTime)
+			e.locustNinetiethResponseTime.WithLabelValues(r.Method, r.Name).Set(r.NinetiethResponseTime)
+			e.locustCurrentFailPerSec.WithLabelValues(r.Method, r.Name).Set(r.CurrentFailPerSec)
 			e.locustMinResponseTime.WithLabelValues(r.Method, r.Name).Set(r.MinResponseTime)
 			e.locustMaxResponseTime.WithLabelValues(r.Method, r.Name).Set(r.MaxResponseTime)
 			e.locustCurrentRps.WithLabelValues(r.Method, r.Name).Set(r.CurrentRps)
