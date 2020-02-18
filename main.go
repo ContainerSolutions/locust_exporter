@@ -28,9 +28,24 @@ type Exporter struct {
 	mutex sync.RWMutex
 	fetch func(endpoint string) (io.ReadCloser, error)
 
-	locustUp, locustUsers, locustSlaves, locustFailRatio, locustCurrentResponseTimePercentileNinetyFifth, locustCurrentResponseTimePercentileFiftieth                                                                                                 prometheus.Gauge
-	locustNumRequests, locustNumFailures, locustAvgResponseTime, locustNinetiethResponseTime, locustCurrentFailPerSec, locustMinResponseTime, locustMaxResponseTime, locustCurrentRps, locustMedianResponseTime, locustAvgContentLength, locustErrors *prometheus.GaugeVec
-	totalScrapes                                                                                                                                                                                                                                      prometheus.Counter
+	locustUp,
+	locustUsers,
+	locustSlaves,
+	locustFailRatio,
+	locustCurrentResponseTimePercentileNinetyFifth,
+	locustCurrentResponseTimePercentileFiftieth prometheus.Gauge
+	locustNumRequests,
+	locustNumFailures,
+	locustAvgResponseTime,
+	locustNinetiethResponseTime,
+	locustCurrentFailPerSec,
+	locustMinResponseTime,
+	locustMaxResponseTime,
+	locustCurrentRps,
+	locustMedianResponseTime,
+	locustAvgContentLength,
+	locustErrors *prometheus.GaugeVec
+	totalScrapes prometheus.Counter
 }
 
 // NewExporter function
