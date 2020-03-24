@@ -2,7 +2,7 @@
 
 Prometheus exporter for [Locust](https://github.com/locustio/locust). This exporter was inspired by [mbolek/locust_exporter](https://github.com/mbolek/locust_exporter).
 
-[![CircleCI](https://circleci.com/gh/ContainerSolutions/locust_exporter.svg?style=svg)](https://circleci.com/gh/ContainerSolutions/locust_exporter) [![Docker Pulls](https://img.shields.io/docker/pulls/containersol/locust_exporter.svg)](https://hub.docker.com/r/containersol/locust_exporter/tags)
+[![CircleCI](https://circleci.com/gh/ContainerSolutions/locust_exporter.svg?style=svg)](https://circleci.com/gh/ContainerSolutions/locust_exporter) [![Docker Pulls](https://img.shields.io/docker/pulls/containersol/locust_exporter.svg)](https://hub.docker.com/r/containersol/locust_exporter/tags) [![license](https://img.shields.io/github/license/ContainerSolutions/locust_exporter.svg)](https://github.com/ContainerSolutions/locust_exporter/blob/master/LICENSE)
 
 ![locust_dashboard](locust_dashboard.png)
 
@@ -67,7 +67,7 @@ The following environment variables configure the exporter:
 
 ### Grafana
 
-The grafana dashboard has beed published with ID [11985](https://grafana.com/grafana/dashboards/11985) and was exported to [locust_dashboard.json](locust_dashboard.json).  
+The grafana dashboard has beed published with ID [11985](https://grafana.com/grafana/dashboards/11985) and was exported to [locust_dashboard.json](locust_dashboard.json).
 
 ### Screenshot
 
@@ -83,4 +83,4 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+Apache License. Please see [License File](LICENSE.md) for more information.
