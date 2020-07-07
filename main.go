@@ -34,15 +34,15 @@ type Exporter struct {
 	locustCurrentResponseTimePercentileNinetyFifth,
 	locustCurrentResponseTimePercentileFiftieth prometheus.Gauge
 	locustRunning,
-	locustSlavesCount,
-	locustSlavesRunningCount,
-	locustSlavesHatchingCount,
-	locustSlavesMissingCount prometheus.Gauge
+	locustWorkersCount,
+	locustWorkersRunningCount,
+	locustWorkersHatchingCount,
+	locustWorkersMissingCount prometheus.Gauge
 	locustNumRequests,
 	locustNumFailures,
 	locustAvgResponseTime,
 	locustCurrentFailPerSec,
-	locustSlavesDetail,
+	locustWorkersDetail,
 	locustMinResponseTime,
 	locustMaxResponseTime,
 	locustCurrentRps,
@@ -91,11 +91,11 @@ func NewExporter(uri string, timeout time.Duration) (*Exporter, error) {
 				Help:      "The current number of users.",
 			},
 		),
-		locustSlavesCount: prometheus.NewGauge(
+		locustWorkersCount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
-				Name:      "slaves_count",
-				Help:      "The current number of slaves.",
+				Name:      "workers_count",
+				Help:      "The current number of workers.",
 			},
 		),
 		locustCurrentResponseTimePercentileNinetyFifth: prometheus.NewGauge(
@@ -119,33 +119,33 @@ func NewExporter(uri string, timeout time.Duration) (*Exporter, error) {
 				Name:      "fail_ratio",
 			},
 		),
-		locustSlavesRunningCount: prometheus.NewGauge(
+		locustWorkersRunningCount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
-				Name:      "slaves_running_count",
-				Help:      "The current number of running slaves.",
+				Name:      "workers_running_count",
+				Help:      "The current number of running workers.",
 			},
 		),
-		locustSlavesHatchingCount: prometheus.NewGauge(
+		locustWorkersHatchingCount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
-				Name:      "slaves_hatching_count",
-				Help:      "The current number of hatching slaves.",
+				Name:      "workers_hatching_count",
+				Help:      "The current number of hatching workers.",
 			},
 		),
-		locustSlavesMissingCount: prometheus.NewGauge(
+		locustWorkersMissingCount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
-				Name:      "slaves_missing_count",
-				Help:      "The current number of missing slaves.",
+				Name:      "workers_missing_count",
+				Help:      "The current number of missing workers.",
 			},
 		),
-		locustSlavesDetail: prometheus.NewGaugeVec(
+		locustWorkersDetail: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
-				Subsystem: "slave",
+				Subsystem: "worker",
 				Name:      "detail",
-				Help:      "The current status of a slave with user count",
+				Help:      "The current status of a worker with user count",
 			},
 			[]string{"id", "state"},
 		),
@@ -245,10 +245,10 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	defer e.mutex.Unlock()
 
 	ch <- e.locustUsers.Desc()
-	ch <- e.locustSlavesCount.Desc()
-	ch <- e.locustSlavesRunningCount.Desc()
-	ch <- e.locustSlavesHatchingCount.Desc()
-	ch <- e.locustSlavesMissingCount.Desc()
+	ch <- e.locustWorkersCount.Desc()
+	ch <- e.locustWorkersRunningCount.Desc()
+	ch <- e.locustWorkersHatchingCount.Desc()
+	ch <- e.locustWorkersMissingCount.Desc()
 	ch <- e.locustUp.Desc()
 	ch <- e.locustRunning.Desc()
 	ch <- e.totalScrapes.Desc()
@@ -266,7 +266,7 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	e.locustCurrentRps.Describe(ch)
 	e.locustAvgContentLength.Describe(ch)
 	e.locustErrors.Describe(ch)
-	e.locustSlavesDetail.Describe(ch)
+	e.locustWorkersDetail.Describe(ch)
 }
 
 // Collect function of Exporter
@@ -286,7 +286,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.locustMedianResponseTime.Collect(ch)
 	e.locustAvgContentLength.Collect(ch)
 	e.locustErrors.Collect(ch)
-	e.locustSlavesDetail.Collect(ch)
+	e.locustWorkersDetail.Collect(ch)
 }
 
 type locustStats struct {
@@ -313,14 +313,14 @@ type locustStats struct {
 	FailRatio                                float64 `json:"fail_ratio"`
 	CurrentResponseTimePercentileNinetyFifth float64 `json:"current_response_time_percentile_95"`
 	CurrentResponseTimePercentileFiftieth    float64 `json:"current_response_time_percentile_50"`
-	SlaveCount                               int     `json:"slave_count,omitempty"`
+	WorkerCount                              int     `json:"worker_count,omitempty"`
 	State                                    string  `json:"state"`
 	UserCount                                int     `json:"user_count"`
-	Slaves                                   []struct {
+	Workers                                  []struct {
 		Id        string `json:"id"`
 		State     string `json:"state"`
 		UserCount int    `json:"user_count"`
-	} `json:"slaves"`
+	} `json:"workers"`
 }
 
 func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
@@ -346,10 +346,10 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 	ch <- prometheus.MustNewConstMetric(e.locustFailRatio.Desc(), prometheus.GaugeValue, float64(locustStats.FailRatio))
 	ch <- prometheus.MustNewConstMetric(e.locustCurrentResponseTimePercentileNinetyFifth.Desc(), prometheus.GaugeValue, float64(locustStats.CurrentResponseTimePercentileNinetyFifth))
 	ch <- prometheus.MustNewConstMetric(e.locustCurrentResponseTimePercentileFiftieth.Desc(), prometheus.GaugeValue, float64(locustStats.CurrentResponseTimePercentileFiftieth))
-	ch <- prometheus.MustNewConstMetric(e.locustSlavesCount.Desc(), prometheus.GaugeValue, float64(len(locustStats.Slaves)))
-	ch <- prometheus.MustNewConstMetric(e.locustSlavesRunningCount.Desc(), prometheus.GaugeValue, countSlavesByState(locustStats, "running"))
-	ch <- prometheus.MustNewConstMetric(e.locustSlavesHatchingCount.Desc(), prometheus.GaugeValue, countSlavesByState(locustStats, "hatching"))
-	ch <- prometheus.MustNewConstMetric(e.locustSlavesMissingCount.Desc(), prometheus.GaugeValue, countSlavesByState(locustStats, "missing"))
+	ch <- prometheus.MustNewConstMetric(e.locustWorkersCount.Desc(), prometheus.GaugeValue, float64(len(locustStats.Workers)))
+	ch <- prometheus.MustNewConstMetric(e.locustWorkersRunningCount.Desc(), prometheus.GaugeValue, countWorkersByState(locustStats, "running"))
+	ch <- prometheus.MustNewConstMetric(e.locustWorkersHatchingCount.Desc(), prometheus.GaugeValue, countWorkersByState(locustStats, "hatching"))
+	ch <- prometheus.MustNewConstMetric(e.locustWorkersMissingCount.Desc(), prometheus.GaugeValue, countWorkersByState(locustStats, "missing"))
 
 	for _, r := range locustStats.Stats {
 		if r.Name != "Total" && r.Name != "//stats/requests" {
@@ -369,8 +369,8 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 		e.locustErrors.WithLabelValues(r.Method, r.Name, r.Error).Set(float64(r.Occurrences))
 	}
 
-	for _, slave := range locustStats.Slaves {
-		e.locustSlavesDetail.WithLabelValues(slave.Id, slave.State).Set(float64(slave.UserCount))
+	for _, worker := range locustStats.Workers {
+		e.locustWorkersDetail.WithLabelValues(worker.Id, worker.State).Set(float64(worker.UserCount))
 	}
 
 	var running = 0 //stopped
@@ -406,10 +406,10 @@ func fetchHTTP(uri string, timeout time.Duration) func(endpoint string) (io.Read
 	}
 }
 
-func countSlavesByState(stats locustStats, state string) float64 {
+func countWorkersByState(stats locustStats, state string) float64 {
 	var count = 0
-	for _, slave := range stats.Slaves {
-		if slave.State == state {
+	for _, worker := range stats.Workers {
+		if worker.State == state {
 			count++
 		}
 	}
