@@ -161,21 +161,21 @@ locust_requests_num_requests{method="GET",name="/stats/requests"} 19955
 # HELP locust_running The current state of the execution (0 = STOPPED 1 = HATCHING 2 = RUNNING,).
 # TYPE locust_running gauge
 locust_running 2
-# HELP locust_slave_detail The current status of a slave with user count
-# TYPE locust_slave_detail gauge
-locust_slave_detail{id="84d64fa91fe7_f501b54dce7f4bb6a80db4e7b677ce51",state="running"} 10
-# HELP locust_slaves_count The current number of slaves.
-# TYPE locust_slaves_count gauge
-locust_slaves_count 1
-# HELP locust_slaves_hatching_count The current number of hatching slaves.
-# TYPE locust_slaves_hatching_count gauge
-locust_slaves_hatching_count 0
-# HELP locust_slaves_missing_count The current number of missing slaves.
-# TYPE locust_slaves_missing_count gauge
-locust_slaves_missing_count 0
-# HELP locust_slaves_running_count The current number of running slaves.
-# TYPE locust_slaves_running_count gauge
-locust_slaves_running_count 1
+# HELP locust_worker_detail The current status of a worker with user count
+# TYPE locust_worker_detail gauge
+locust_worker_detail{id="84d64fa91fe7_f501b54dce7f4bb6a80db4e7b677ce51",state="running"} 10
+# HELP locust_workers_count The current number of workers.
+# TYPE locust_workers_count gauge
+locust_workers_count 1
+# HELP locust_workers_hatching_count The current number of hatching workers.
+# TYPE locust_workers_hatching_count gauge
+locust_workers_hatching_count 0
+# HELP locust_workers_missing_count The current number of missing workers.
+# TYPE locust_workers_missing_count gauge
+locust_workers_missing_count 0
+# HELP locust_workers_running_count The current number of running workers.
+# TYPE locust_workers_running_count gauge
+locust_workers_running_count 1
 # HELP locust_up The current health status of the server (1 = UP, 0 = DOWN).
 # TYPE locust_up gauge
 locust_up 1

@@ -409,7 +409,7 @@
       },
       "tableColumn": "",
       "targets": [{
-        "expr": "locust_slaves_count",
+        "expr": "locust_workers_count",
         "interval": "",
         "intervalFactor": 2,
         "legendFormat": "",
@@ -417,7 +417,7 @@
         "step": 20
       }],
       "thresholds": "",
-      "title": "Connected slaves",
+      "title": "Connected workers",
       "type": "singlestat",
       "valueFontSize": "80%",
       "valueMaps": [{
@@ -1248,19 +1248,19 @@
       "stack": false,
       "steppedLine": false,
       "targets": [{
-        "expr": "locust_slaves_count",
+        "expr": "locust_workers_count",
         "format": "time_series",
         "instant": false,
         "interval": "",
         "intervalFactor": 1,
-        "legendFormat": "Slaves",
+        "legendFormat": "Workers",
         "refId": "A"
       }],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Slaves",
+      "title": "Workers",
       "tooltip": {
         "shared": true,
         "sort": 0,
