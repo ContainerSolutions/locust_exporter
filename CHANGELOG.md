@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.4.0 / 2020-09-08
+
+* PR [#7](https://github.com/ContainerSolutions/locust_exporter/pull/7) replace slave by worker
+
 ## 0.3.0 / 2020-02-18
 
 * PR [#1](https://github.com/ContainerSolutions/locust_exporter/pull/1) fixed compat issues with occurences & slave count, add error message
