@@ -1,0 +1,22 @@
+name: CI
+
+on: 
+  push:
+  pull_request:
+    types: [opened]
+    
+jobs:
+  build:
+    name: ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.12' 
+
+      - name: Build
+        run: make build

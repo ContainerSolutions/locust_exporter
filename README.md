@@ -2,7 +2,7 @@
 
 Prometheus exporter for [Locust](https://github.com/locustio/locust). This exporter was inspired by [mbolek/locust_exporter](https://github.com/mbolek/locust_exporter).
 
-[![CircleCI](https://circleci.com/gh/ContainerSolutions/locust_exporter.svg?style=svg)](https://circleci.com/gh/ContainerSolutions/locust_exporter) [![Docker Pulls](https://img.shields.io/docker/pulls/containersol/locust_exporter.svg)](https://hub.docker.com/r/containersol/locust_exporter/tags) [![license](https://img.shields.io/github/license/ContainerSolutions/locust_exporter.svg)](https://github.com/ContainerSolutions/locust_exporter/blob/master/LICENSE)
+[![Docker Pulls](https://img.shields.io/docker/pulls/containersol/locust_exporter.svg)](https://hub.docker.com/r/containersol/locust_exporter/tags) [![license](https://img.shields.io/github/license/ContainerSolutions/locust_exporter.svg)](https://github.com/ContainerSolutions/locust_exporter/blob/master/LICENSE)
 
 ![locust_dashboard](locust_dashboard.png)
 
