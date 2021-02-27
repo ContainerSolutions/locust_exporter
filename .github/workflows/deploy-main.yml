@@ -8,7 +8,7 @@ on:
       - pperzyna/update-pipelines
 
 env:
-  REGISTRY: ghcr.io/containersolutions/locust_exporter
+  REGISTRY: containersol/locust_exporter
 
 jobs:
   build:
@@ -27,7 +27,7 @@ jobs:
         run: make build
 
       - name: Container - Login
-        run: echo ${{ secrets.GH_TOKEN }} | docker login ghcr.io --username ${{ secrets.GH_USER }} --password-stdin
+        run: echo ${{ secrets.DOCKERHUB_PASS }} | docker login ghcr.io --username ${{ secrets.DOCKERHUB_USER }} --password-stdin
 
       - name: Container - Build    
         run: docker build -t ${{ env.REGISTRY }}:latest .
