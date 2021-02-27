@@ -27,7 +27,7 @@ jobs:
         run: make build
 
       - name: Container - Login
-        run: echo ${{ secrets.DOCKERHUB_PASS }} | docker login ghcr.io --username ${{ secrets.DOCKERHUB_USER }} --password-stdin
+        run: echo ${{ secrets.DOCKERHUB_PASS }} | docker login --username ${{ secrets.DOCKERHUB_USER }} --password-stdin
 
       - name: Container - Build    
         run: docker build -t ${{ env.REGISTRY }}:latest .
