@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.4.1 / 2021-02-27
+
+* PR [#20](https://github.com/ContainerSolutions/locust_exporter/pull/20) migrate to GitHub Actions
+
 ## 0.4.0 / 2020-09-08
 
 * PR [#7](https://github.com/ContainerSolutions/locust_exporter/pull/7) replace slave by worker

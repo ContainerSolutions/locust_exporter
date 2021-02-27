@@ -2,6 +2,6 @@
 
 Contributions are **welcome** and will be fully **credited**.
 
-We accept contributions via Pull Requests on [Github](https://github.com/ContainerSolutions/locust_exporter).
+We accept contributions via Pull Requests!
 
 **Happy Coding!**
