@@ -26,7 +26,10 @@ jobs:
         run: make build
 
       - name: Container - Login
-        run: echo ${{ secrets.DOCKERHUB_PASS }} | docker login --username ${{ secrets.DOCKERHUB_USER }} --password-stdin
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASS }}
 
       - name: Container - Build    
         run: docker build -t ${{ env.REGISTRY }}:$(echo $GITHUB_REF | sed -e "s/refs\/tags\///g") .
