@@ -10,7 +10,7 @@ Prometheus exporter for [Locust](https://github.com/locustio/locust). This expor
 
 This package is available for Docker:
 
-1. Run Locust Master ([example docker-compose](https://github.com/locustio/locust/blob/master/examples/docker-compose/docker-compose.yml))
+1. Run Locust ([example docker-compose](https://github.com/locustio/locust/blob/master/examples/docker-compose/docker-compose.yml))
 
 2. Run Locust Exporter
 
