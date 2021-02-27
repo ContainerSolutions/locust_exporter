@@ -13,4 +13,5 @@
 
 include Makefile.common
 
-DOCKER_IMAGE_NAME       ?= locust_exporter
+## This is a copy!
+## https://github.com/prometheus/prometheus/blob/main/Makefile.common

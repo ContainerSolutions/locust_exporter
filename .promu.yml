@@ -1,4 +1,4 @@
-verbose: true
+verbose: false
 go:
   version: 1.12
   cgo: false
