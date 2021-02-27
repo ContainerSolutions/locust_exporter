@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# https://github.com/prometheus/prometheus/blob/main/Makefile.common
 include Makefile.common
 
-DOCKER_IMAGE_NAME ?= locust-exporter
+## This is a copy!
+## https://github.com/prometheus/prometheus/blob/main/Makefile.common

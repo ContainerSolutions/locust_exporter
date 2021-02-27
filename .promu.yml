@@ -19,4 +19,5 @@ tarball:
     - LICENSE
 crossbuild:
   platforms:
+    - linux/amd64
     - linux/386
