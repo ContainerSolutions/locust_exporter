@@ -1,11 +1,9 @@
 name: Deploy Main
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
-      - pperzyna/update-pipelines
 
 env:
   REGISTRY: containersol/locust_exporter
