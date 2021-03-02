@@ -2,10 +2,8 @@ name: Trivy Aqua
 
 on:
   workflow_dispatch:
-  # Uncomment when PR62 is merged
-  # https://github.com/lazy-actions/gitrivy/pull/62
-  # schedule:
-  #   - cron: '0 4 * * MON'
+  schedule:
+    - cron: '0 4 * * MON'
 
 env:
   REGISTRY: containersol/locust_exporter
@@ -25,9 +23,11 @@ jobs:
 
       - name: Container - Pull    
         run: docker pull ${{ env.REGISTRY }}:latest
-
+      
+      # Move to homoluctus/gitrivy when PR62 is merged
+      # https://github.com/lazy-actions/gitrivy/pull/62
       - name: Container - Scan
-        uses: homoluctus/gitrivy@v2.0.0
+        uses: wochinge/gitrivy@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           image: ${{ env.REGISTRY }}:latest
