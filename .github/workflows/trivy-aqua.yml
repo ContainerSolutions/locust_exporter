@@ -1,0 +1,33 @@
+name: Trivy Aqua
+
+on:
+  workflow_dispatch:
+  # Uncomment when PR62 is merged
+  # https://github.com/lazy-actions/gitrivy/pull/62
+  # schedule:
+  #   - cron: '0 4 * * MON'
+
+env:
+  REGISTRY: containersol/locust_exporter
+
+jobs:
+  trivy-scan:
+    name: Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+
+      - name: Container - Login
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASS }}
+
+      - name: Container - Pull    
+        run: docker pull ${{ env.REGISTRY }}:latest
+
+      - name: Container - Scan
+        uses: homoluctus/gitrivy@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image: ${{ env.REGISTRY }}:latest
