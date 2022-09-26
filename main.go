@@ -420,7 +420,7 @@ func countWorkersByState(stats locustStats, state string) float64 {
 
 type quitHandler struct{}
 
-func (h quitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h quitHandler) ServeHTTP(http.ResponseWriter, *http.Request) {
 	os.Exit(0)
 }
 
