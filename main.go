@@ -418,12 +418,6 @@ func countWorkersByState(stats locustStats, state string) float64 {
 	return float64(count)
 }
 
-type quitHandler struct{}
-
-func (h quitHandler) ServeHTTP(http.ResponseWriter, *http.Request) {
-	os.Exit(0)
-}
-
 func main() {
 
 	var (
@@ -449,7 +443,7 @@ func main() {
 	prometheus.MustRegister(version.NewCollector("locustexporter"))
 
 	http.Handle(*metricsPath, promhttp.Handler())
-	http.Handle("/quitquitquit", quitHandler{})
+	http.HandleFunc("/quitquitquit", func(http.ResponseWriter, *http.Request) { os.Exit(0) })
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`<html><head><title>Locust Exporter</title></head><body><h1>Locust Exporter</h1><p><a href='` + *metricsPath + `'>Metrics</a></p></body></html>`))
 	})
