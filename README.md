@@ -14,9 +14,33 @@ This package is available for Docker:
 
 2. Run Locust Exporter
 
-```bash
-docker run --net=host containersol/locust_exporter
-```
+    with docker:
+
+    ```bash
+    docker run --net=host containersol/locust_exporter
+    ```
+
+    or with docker-compose:
+
+    ```yaml
+    version: "3.0"
+
+    services:
+      locust-exporter:
+        image: containersol/locust_exporter
+        network_mode: "host"
+    ```
+
+3. Modify `prometheus.yml` to add target to Prometheus
+
+    ```yaml
+    scrape_configs:
+      - job_name: 'locust'
+        static_configs:
+          - targets: ['<LOCUST_IP>:9646']
+    ```
+
+4. Add dashboard to Grafana with ID [11985](https://grafana.com/grafana/dashboards/11985)
 
 ## Building and Running
 
