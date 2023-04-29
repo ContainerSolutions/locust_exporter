@@ -30,22 +30,25 @@ go run main.go
 
 ### Flags
 
-- `locust.uri`
+- `--locust.uri`
   Address of Locust. Default is `http://localhost:8089`.
 
-- `locust.timeout`
+- `--locust.timeout`
   Timeout request to Locust. Default is `5s`.
 
-- `web.listen-address`
+- `--web.listen-address`
   Address to listen on for web interface and telemetry. Default is `:9646`.
 
-- `web.telemetry-path`
+- `--web.telemetry-path`
   Path under which to expose metrics. Default is `/metrics`.
 
-- `log.level`
+- `--locust.namespace`
+  Namespace for prometheus metrics. Default `locust`.
+
+- `--log.level`
   Set logging level: one of `debug`, `info`, `warn`, `error`, `fatal`
 
-- `log.format`
+- `--log.format`
   Set the log output target and format. e.g. `logger:syslog?appname=bob&local=7` or `logger:stdout?json=true`
   Defaults to `logger:stderr`.
 
@@ -64,6 +67,9 @@ The following environment variables configure the exporter:
 
 - `LOCUST_EXPORTER_WEB_TELEMETRY_PATH`
   Path under which to expose metrics. Default is `/metrics`.
+
+- `LOCUST_METRIC_NAMESPACE`
+  Namespace for prometheus metrics. Default `locust`.
 
 ### Grafana
 
