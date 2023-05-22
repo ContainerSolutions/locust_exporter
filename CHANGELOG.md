@@ -1,5 +1,7 @@
 # CHANGELOG
 
+Please see [GitHub Releases](https://github.com/ContainerSolutions/locust_exporter/releases) for the latest updates.
+
 ## 0.4.1 / 2021-02-27
 
 * PR [#20](https://github.com/ContainerSolutions/locust_exporter/pull/20) migrate to GitHub Actions
