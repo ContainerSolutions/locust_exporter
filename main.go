@@ -4,24 +4,22 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/version"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"sync"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/log"
-	"github.com/prometheus/common/version"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
 	namespace string
-	NameSpace *string
 )
 
 // Exporter structure
@@ -332,12 +330,17 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 
 	body, err := e.fetch("/stats/requests")
 	if err != nil {
-		log.Errorf("Can't scrape Pack: %v", err)
+		logrus.Error("Can't scrape Pack: %v", err)
 		return 0
 	}
-	defer body.Close()
+	defer func(body io.ReadCloser) {
+		err := body.Close()
+		if err != nil {
+			logrus.Error(err)
+		}
+	}(body)
 
-	bodyAll, err := ioutil.ReadAll(body)
+	bodyAll, err := io.ReadAll(body)
 	if err != nil {
 		return 0
 	}
@@ -345,9 +348,9 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 	_ = json.Unmarshal([]byte(bodyAll), &locustStats)
 
 	ch <- prometheus.MustNewConstMetric(e.locustUsers.Desc(), prometheus.GaugeValue, float64(locustStats.UserCount))
-	ch <- prometheus.MustNewConstMetric(e.locustFailRatio.Desc(), prometheus.GaugeValue, float64(locustStats.FailRatio))
-	ch <- prometheus.MustNewConstMetric(e.locustCurrentResponseTimePercentileNinetyFifth.Desc(), prometheus.GaugeValue, float64(locustStats.CurrentResponseTimePercentileNinetyFifth))
-	ch <- prometheus.MustNewConstMetric(e.locustCurrentResponseTimePercentileFiftieth.Desc(), prometheus.GaugeValue, float64(locustStats.CurrentResponseTimePercentileFiftieth))
+	ch <- prometheus.MustNewConstMetric(e.locustFailRatio.Desc(), prometheus.GaugeValue, locustStats.FailRatio)
+	ch <- prometheus.MustNewConstMetric(e.locustCurrentResponseTimePercentileNinetyFifth.Desc(), prometheus.GaugeValue, locustStats.CurrentResponseTimePercentileNinetyFifth)
+	ch <- prometheus.MustNewConstMetric(e.locustCurrentResponseTimePercentileFiftieth.Desc(), prometheus.GaugeValue, locustStats.CurrentResponseTimePercentileFiftieth)
 	ch <- prometheus.MustNewConstMetric(e.locustWorkersCount.Desc(), prometheus.GaugeValue, float64(len(locustStats.Workers)))
 	ch <- prometheus.MustNewConstMetric(e.locustWorkersRunningCount.Desc(), prometheus.GaugeValue, countWorkersByState(locustStats, "running"))
 	ch <- prometheus.MustNewConstMetric(e.locustWorkersHatchingCount.Desc(), prometheus.GaugeValue, countWorkersByState(locustStats, "hatching"))
@@ -401,7 +404,10 @@ func fetchHTTP(uri string, timeout time.Duration) func(endpoint string) (io.Read
 			return nil, err
 		}
 		if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
-			resp.Body.Close()
+			err := resp.Body.Close()
+			if err != nil {
+				return nil, err
+			}
 			return nil, fmt.Errorf("HTTP status %d", resp.StatusCode)
 		}
 		return resp.Body, nil
@@ -428,14 +434,14 @@ func main() {
 		timeout       = kingpin.Flag("locust.timeout", "Scrape timeout").Default("5s").Envar("LOCUST_EXPORTER_TIMEOUT").Duration()
 	)
 
-	log.AddFlags(kingpin.CommandLine)
+	logrus.Info(kingpin.CommandLine)
 	kingpin.Version(version.Print("locust_exporter"))
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
 	namespace = *NameSpace
-	log.Infoln("Starting locust_exporter", version.Info())
-	log.Infoln("Build context", version.BuildContext())
+	logrus.Info("Starting locust_exporter", version.Info())
+	logrus.Info("Build context", version.BuildContext())
 
 	exporter, err := NewExporter(*uri, *timeout)
 	if err != nil {
@@ -450,6 +456,6 @@ func main() {
 		_, _ = w.Write([]byte(`<html><head><title>Locust Exporter</title></head><body><h1>Locust Exporter</h1><p><a href='` + *metricsPath + `'>Metrics</a></p></body></html>`))
 	})
 
-	log.Infoln("Listening on", *listenAddress)
+	logrus.Info("Listening on", *listenAddress)
 	log.Fatal(http.ListenAndServe(*listenAddress, nil))
 }
