@@ -41,6 +41,8 @@ type Exporter struct {
 	locustWorkersHatchingCount,
 	locustWorkersMissingCount prometheus.Gauge
 	locustNumRequests,
+	locustCurrentResponseTimePercentileNinetieth,
+	locustCurrentResponseTimePercentileNinetyNinth,
 	locustNumFailures,
 	locustAvgResponseTime,
 	locustCurrentFailPerSec,
@@ -175,6 +177,22 @@ func NewExporter(uri string, timeout time.Duration) (*Exporter, error) {
 			},
 			[]string{"method", "name"},
 		),
+		locustCurrentResponseTimePercentileNinetieth: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Subsystem: "requests",
+				Name:      "current_response_time_percentile_90",
+			},
+			[]string{"method", "name"},
+		),
+		locustCurrentResponseTimePercentileNinetyNinth: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Subsystem: "requests",
+				Name:      "current_response_time_percentile_99",
+			},
+			[]string{"method", "name"},
+		),
 		locustCurrentFailPerSec: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
@@ -261,6 +279,8 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	e.locustNumRequests.Describe(ch)
 	e.locustNumFailures.Describe(ch)
 	e.locustAvgResponseTime.Describe(ch)
+	e.locustCurrentResponseTimePercentileNinetieth.Describe(ch)
+	e.locustCurrentResponseTimePercentileNinetyNinth.Describe(ch)
 	e.locustCurrentFailPerSec.Describe(ch)
 	e.locustMinResponseTime.Describe(ch)
 	e.locustMaxResponseTime.Describe(ch)
@@ -281,6 +301,8 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.locustNumRequests.Collect(ch)
 	e.locustNumFailures.Collect(ch)
 	e.locustAvgResponseTime.Collect(ch)
+	e.locustCurrentResponseTimePercentileNinetieth.Collect(ch)
+	e.locustCurrentResponseTimePercentileNinetyNinth.Collect(ch)
 	e.locustCurrentFailPerSec.Collect(ch)
 	e.locustMinResponseTime.Collect(ch)
 	e.locustMaxResponseTime.Collect(ch)
@@ -293,17 +315,20 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 type locustStats struct {
 	Stats []struct {
-		Method             string  `json:"method"`
-		Name               string  `json:"name"`
-		NumRequests        int     `json:"num_requests"`
-		NumFailures        int     `json:"num_failures"`
-		AvgResponseTime    float64 `json:"avg_response_time"`
-		CurrentFailPerSec  float64 `json:"current_fail_per_sec"`
-		MinResponseTime    float64 `json:"min_response_time"`
-		MaxResponseTime    float64 `json:"max_response_time"`
-		CurrentRps         float64 `json:"current_rps"`
-		MedianResponseTime float64 `json:"median_response_time"`
-		AvgContentLength   float64 `json:"avg_content_length"`
+		Method          string  `json:"method"`
+		Name            string  `json:"name"`
+		NumRequests     int     `json:"num_requests"`
+		NumFailures     int     `json:"num_failures"`
+		AvgResponseTime float64 `json:"avg_response_time"`
+
+		NinetiethPercentileResponseTime   float64 `json:"ninetieth_response_time"`
+		NinetyNinthPercentileResponseTime float64 `json:"ninety_ninth_response_time"`
+		CurrentFailPerSec                 float64 `json:"current_fail_per_sec"`
+		MinResponseTime                   float64 `json:"min_response_time"`
+		MaxResponseTime                   float64 `json:"max_response_time"`
+		CurrentRps                        float64 `json:"current_rps"`
+		MedianResponseTime                float64 `json:"median_response_time"`
+		AvgContentLength                  float64 `json:"avg_content_length"`
 	} `json:"stats"`
 	Errors []struct {
 		Method      string `json:"method"`
@@ -358,6 +383,8 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 			e.locustNumRequests.WithLabelValues(r.Method, r.Name).Set(float64(r.NumRequests))
 			e.locustNumFailures.WithLabelValues(r.Method, r.Name).Set(float64(r.NumFailures))
 			e.locustAvgResponseTime.WithLabelValues(r.Method, r.Name).Set(r.AvgResponseTime)
+			e.locustCurrentResponseTimePercentileNinetieth.WithLabelValues(r.Method, r.Name).Set(r.NinetiethPercentileResponseTime)
+			e.locustCurrentResponseTimePercentileNinetyNinth.WithLabelValues(r.Method, r.Name).Set(r.NinetyNinthPercentileResponseTime)
 			e.locustCurrentFailPerSec.WithLabelValues(r.Method, r.Name).Set(r.CurrentFailPerSec)
 			e.locustMinResponseTime.WithLabelValues(r.Method, r.Name).Set(r.MinResponseTime)
 			e.locustMaxResponseTime.WithLabelValues(r.Method, r.Name).Set(r.MaxResponseTime)
