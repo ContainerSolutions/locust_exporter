@@ -313,8 +313,8 @@ type locustStats struct {
 	} `json:"errors"`
 	TotalRps                                 float64 `json:"total_rps"`
 	FailRatio                                float64 `json:"fail_ratio"`
-	CurrentResponseTimePercentileNinetyFifth float64 `json:"current_response_time_percentile_95"`
-	CurrentResponseTimePercentileFiftieth    float64 `json:"current_response_time_percentile_50"`
+	CurrentResponseTimePercentileNinetyFifth float64 `json:"current_response_time_percentile_2"`
+	CurrentResponseTimePercentileFiftieth    float64 `json:"current_response_time_percentile_1"`
 	WorkerCount                              int     `json:"worker_count,omitempty"`
 	State                                    string  `json:"state"`
 	UserCount                                int     `json:"user_count"`
